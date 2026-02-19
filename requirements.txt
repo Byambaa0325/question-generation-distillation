@@ -1,0 +1,43 @@
+# Core ML
+torch>=2.0.0
+transformers>=4.36.0
+datasets>=2.14.0
+accelerate>=0.25.0
+peft>=0.7.0
+bitsandbytes>=0.42.0
+
+# Teacher LLM backends
+ollama>=0.1.0
+google-generativeai>=0.3.0
+
+# NLP utilities
+sentencepiece>=0.1.99
+tokenizers>=0.15.0
+sentence-transformers>=2.2.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+pyyaml>=6.0
+
+# Evaluation
+rouge-score>=0.1.2
+bert-score>=0.3.13
+nltk>=3.8.0
+
+# Experiment tracking
+wandb>=0.16.0
+tensorboard>=2.15.0
+
+# Utilities
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+rich>=13.0.0
+
+# Knowledge Graph (optional)
+neo4j>=5.0.0
+networkx>=3.0.0
+
+# Notebook support
+jupyter>=1.0.0
+ipywidgets>=8.0.0

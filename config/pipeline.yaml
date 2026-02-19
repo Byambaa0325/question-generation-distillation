@@ -1,0 +1,54 @@
+# Pipeline configuration for topic-controlled question generation.
+# All paths are relative to the project root.
+
+paths:
+  raw:       data/raw
+  processed: data/processed
+  training:  data/training
+  models:    models
+  results:   results
+
+wikification:
+  tool:       wikifier    # wikifier | wat
+  top_n:      5
+  chunk_size: 650
+  save_every: 50
+  # Wikifier-specific
+  df_ignore:    200
+  words_ignore: 200
+  # WAT-specific
+  wat_lang: en
+
+dataset:
+  max_tokens:        510
+  train_ratio:       0.70
+  val_ratio:         0.15
+  test_ratio:        0.15
+  mix_samples:       10000
+  khanq_mix_samples: 653
+  seed:              42
+
+training:
+  model_name:    google-t5/t5-small
+  batch:         64
+  lr:            1.0e-3
+  epochs:        50
+  max_input_len: 200
+  max_output_len: 45
+  warmup_steps:  0
+  special_tokens:
+    - "<sep>"
+    - "<space>"
+
+evaluation:
+  max_samples:        null   # null = all samples
+  compute_wikisemrel: false
+  num_beams:          10
+  num_return_sequences: 8
+  # Non-auto-discoverable models included when models='all' is used.
+  # Ollama models are auto-discovered from the running server — no need to list them here.
+  # Gemini models require GOOGLE_API_KEY env var.
+  zero_shot_models:
+    - gemini:gemini-2.5-pro
+    - gemini:gemini-2.5-flash
+    - gemini:gemini-2.5-flash-lite

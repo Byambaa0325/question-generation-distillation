@@ -1,0 +1,115 @@
+# Knowledge Distillation Configuration
+
+# Environment
+environment:
+  device: "cuda"  # cuda, cpu, or auto
+  seed: 42
+  mixed_precision: true  # fp16 training
+
+# Teacher Model Configuration
+teacher:
+  backend: "gemini"  # Options: colab, gemini, ollama
+  # - colab: Google Colab AI (paid plans, no API key needed)
+  # - gemini: Google Gemini API (requires GOOGLE_API_KEY)
+  # - ollama: Local Ollama server
+
+  ollama:
+    model_name: "llama3.1:8b"
+    base_url: "http://localhost:11434"
+    temperature: 0.7
+    max_tokens: 512
+
+  gemini:
+    model_name: "gemini-1.5-flash"
+    temperature: 0.7
+    max_tokens: 512
+    # API key loaded from environment: GOOGLE_API_KEY
+
+# Student Model Configuration
+student:
+  model_name: "google/flan-t5-base"  # or t5-small, t5-base, t5-large
+  max_input_length: 256
+  max_output_length: 128
+
+# Concept Configuration
+concepts:
+  embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+  similarity_threshold: 0.85  # for deduplication
+  max_concepts_per_context: 5
+
+# Learner Levels
+learner_levels:
+  - id: "beginner"
+    description: "New to the topic, needs simple explanations"
+    complexity: 1
+  - id: "intermediate"
+    description: "Has foundational knowledge, can handle moderate complexity"
+    complexity: 2
+  - id: "advanced"
+    description: "Strong understanding, can handle nuanced questions"
+    complexity: 3
+
+# Question Types
+question_types:
+  - "recall"       # What is X?
+  - "explain"      # Why does X happen?
+  - "apply"        # How would you use X?
+  - "compare"      # How does X differ from Y?
+  - "analyze"      # What are the implications of X?
+
+# Data Generation
+data_generation:
+  samples_per_concept_level: 3  # questions per (concept, level) pair
+  batch_size: 10
+  output_dir: "data/generated"
+
+# Distillation Training
+training:
+  # Training mode: "full" or "qlora"
+  mode: "qlora"  # Recommended: qlora for memory efficiency
+
+  output_dir: "outputs/distillation"
+  num_epochs: 3
+  batch_size: 8  # Can use smaller batch with gradient accumulation
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4  # Higher LR for LoRA (5e-5 for full fine-tuning)
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_grad_norm: 0.3
+
+  # Checkpointing
+  save_strategy: "epoch"
+  save_total_limit: 3
+  save_merged: false  # Save only adapters (smaller) or merged model
+
+  # Logging
+  logging_steps: 10
+  eval_steps: 100
+
+  # Early stopping
+  early_stopping_patience: 3
+
+# QLoRA Configuration (used when training.mode == "qlora")
+qlora:
+  # Quantization
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"  # nf4 or fp4
+  bnb_4bit_compute_dtype: "bfloat16"  # bfloat16, float16, float32
+  bnb_4bit_use_double_quant: true
+
+  # LoRA hyperparameters
+  lora_r: 16  # Rank (higher = more capacity, more memory)
+  lora_alpha: 32  # Alpha scaling factor
+  lora_dropout: 0.05
+  # target_modules: auto-detected for T5
+
+  # Memory optimization
+  gradient_checkpointing: true
+
+# Evaluation
+evaluation:
+  metrics:
+    - "rouge"
+    - "bleu"
+    - "bert_score"
+  human_eval_sample_size: 100

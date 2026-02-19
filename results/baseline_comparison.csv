@@ -1,0 +1,7 @@
+Dataset,Method,Our BLEU,Paper BLEU,Difference
+SQuAD,T5-base (zero-shot),0.00,16.51,-16.51
+SQuAD,T5-small (fine-tuned),TODO,18.23,TODO
+SQuAD,Ours (T5-small + topic),TODO,19.45,TODO
+KhanQ,T5-base (zero-shot),N/A,9.32,N/A
+KhanQ,T5-small (fine-tuned),TODO,11.45,TODO
+KhanQ,Ours (T5-small + topic),TODO,13.78,TODO
