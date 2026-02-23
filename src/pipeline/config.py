@@ -53,11 +53,13 @@ class TrainingConfig:
     epochs:              int       = 50
     max_input_len:       int       = 200
     max_output_len:      int       = 45
-    warmup_steps:        int       = 0
-    fp16:                bool      = False   # T4 / V100
-    bf16:                bool      = False   # A100 / H100
-    grad_accum:          int       = 1       # effective_batch = batch * grad_accum
-    dataloader_workers:  int       = 0       # 0 = main process (Windows safe)
+    warmup_steps:              int       = 0
+    weight_decay:              float     = 0.01   # L2 regularisation
+    early_stopping_patience:   int       = 5      # 0 = disabled
+    fp16:                      bool      = False   # T4 / V100
+    bf16:                      bool      = False   # A100 / H100
+    grad_accum:                int       = 1       # effective_batch = batch * grad_accum
+    dataloader_workers:        int       = 0       # 0 = main process (Windows safe)
     special_tokens: list[str] = field(default_factory=lambda: ["<sep>", "<space>"])
 
 

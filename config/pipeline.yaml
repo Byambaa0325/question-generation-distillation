@@ -35,11 +35,13 @@ training:
   epochs:             50
   max_input_len:      200
   max_output_len:     45
-  warmup_steps:       0
-  fp16:               false   # set true for T4/V100 in Colab
-  bf16:               false   # set true for A100/H100 in Colab
-  grad_accum:         1       # increase to simulate larger batch without more VRAM
-  dataloader_workers: 0       # 0 = safe on Windows; set 2-4 on Linux/Colab
+  warmup_steps:            0
+  weight_decay:            0.01  # L2 regularisation; helps prevent overfitting
+  early_stopping_patience: 5     # stop if val loss doesn't improve for N epochs; 0 = off
+  fp16:               false       # set true for T4/V100 in Colab
+  bf16:               false       # set true for A100/H100 in Colab
+  grad_accum:         1           # increase to simulate larger batch without more VRAM
+  dataloader_workers: 0           # 0 = safe on Windows; set 2-4 on Linux/Colab
   special_tokens:
     - "<sep>"
     - "<space>"

@@ -93,6 +93,46 @@ Generated from WAT-enriched SQuAD (`data/processed/wat/enriched_squad_filtered.j
 
 ---
 
+## Completeness check
+
+Run: `python -c "import pandas as pd, json; ..."` — last checked 2026-02-23.
+
+### Result: all files pass except MixKhanQ
+
+| File | Rows | Nulls | Status |
+|------|------|-------|--------|
+| `squad/baseline/` train/val/test | 26,171 / 5,608 / 5,609 | 0 | OK |
+| `squad/mixsquad/` train/val/test | 7,000 / 1,500 / 1,500 | 0 | OK |
+| `squad/mixsquad2x/` train/val/test | 14,000 / 3,000 / 3,000 | 0 | OK |
+| `khanq_full/` train/val/test | 508 / 109 / 109 | 0 | OK |
+| `final/` train/val/test | 508 / 109 / 109 | 0 | OK |
+| `khanq/mixkhanq/data.csv` | 653 | **353 null cells** | **ISSUE** |
+| `raw/KhanQ.json` | 1,034 | 0 | OK |
+| `wikifier/enriched_khanq_filtered.json` | 1,034 | 0 | OK |
+| `wat/enriched_squad_filtered.json` | 37,498 | 0 | OK |
+| `wat/enriched_khanq_filtered.json` | 47 | 0 | OK |
+
+### MixKhanQ null topic detail
+
+| Column | Null rows | % of 653 |
+|--------|-----------|----------|
+| `topic` | 183 | 28.0% |
+| `topic2` | 170 | 26.0% |
+| Either null | 305 | **46.7%** |
+| Both null | 48 | 7.3% |
+| Fully complete rows | 348 | 53.3% |
+
+**Root cause:** The Wikifier enrichment assigns the string `"NA"` when no Wikipedia concept overlaps between context and question. `pandas.read_csv` silently converts `"NA"` strings to `NaN` by default — so these are not truly missing rows, they are entries where no topic was matched.
+
+**Impact on evaluation:** `pipe.evaluate(dataset='khanq')` uses the `topic2` column as the input topic. Of the 653 evaluation pairs, 170 (26%) will receive `"nan"` as the topic string at inference time, which degrades generation quality and skews metrics downward.
+
+**Mitigation options:**
+1. Read CSV with `keep_default_na=False` and replace `"NA"` with a fallback topic (e.g. the Wikipedia page title from `context2`).
+2. Filter out rows where `topic` or `topic2` is `"NA"` before evaluation — reduces set to 348 fully clean pairs.
+3. Accept as-is and note in results that 46.7% of KhanQ eval pairs have no matched topic.
+
+---
+
 ## Format reference
 
 **JSON training files** (`data/training/squad/*/`, `data/training/khanq/{baseline,topic}/`):

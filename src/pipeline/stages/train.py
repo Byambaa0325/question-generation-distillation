@@ -44,6 +44,7 @@ def run(
     from torch.utils.data import Dataset
     from transformers import (
         DataCollatorForSeq2Seq,
+        EarlyStoppingCallback,
         Seq2SeqTrainer,
         Seq2SeqTrainingArguments,
         T5ForConditionalGeneration,
@@ -160,6 +161,7 @@ def run(
         per_device_eval_batch_size=tc.batch,
         learning_rate=tc.lr,
         warmup_steps=tc.warmup_steps,
+        weight_decay=tc.weight_decay,
         fp16=tc.fp16,
         bf16=tc.bf16,
         gradient_accumulation_steps=tc.grad_accum,
@@ -175,6 +177,13 @@ def run(
         report_to="none",
     )
 
+    callbacks = []
+    if tc.early_stopping_patience > 0:
+        callbacks.append(EarlyStoppingCallback(
+            early_stopping_patience=tc.early_stopping_patience
+        ))
+        print(f"  Early stopping: patience={tc.early_stopping_patience}")
+
     data_collator = DataCollatorForSeq2Seq(
         tokenizer, model=model, padding=True, label_pad_token_id=-100
     )
@@ -186,6 +195,7 @@ def run(
         eval_dataset=val_dataset,
         processing_class=tokenizer,
         data_collator=data_collator,
+        callbacks=callbacks if callbacks else None,
     )
 
     trainer.train()
