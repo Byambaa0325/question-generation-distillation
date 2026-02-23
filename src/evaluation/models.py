@@ -176,6 +176,77 @@ class T5Model:
 
 
 # ---------------------------------------------------------------------------
+# T5 zero-shot baseline (base pretrained model, no fine-tuning)
+# ---------------------------------------------------------------------------
+
+_T5_ZERO_SHOT_PROMPT = (
+    "generate question: {context} generate question about {topic}:"
+)
+
+
+class T5ZeroShotModel:
+    """
+    Zero-shot T5 baseline using the base pretrained model (no fine-tuning).
+
+    Sandwich pattern: task prefix at the start (never truncated) then context,
+    then the task + topic repeated at the end so the model has both signals
+    immediately before generation regardless of context length.
+
+    Prompt: ``generate question: {context} generate question about {topic}:``
+    """
+
+    def __init__(self, model_name: str = "google-t5/t5-small"):
+        import torch
+        from transformers import T5ForConditionalGeneration, T5Tokenizer
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = T5ForConditionalGeneration.from_pretrained(model_name)
+        self.tokenizer = T5Tokenizer.from_pretrained(model_name, legacy=False)
+        self.model.to(self.device)
+        self.model.eval()
+
+    def generate_question(self, topic: str, context: str) -> str:
+        import torch
+
+        input_text = _T5_ZERO_SHOT_PROMPT.format(topic=topic, context=context)
+        enc = self.tokenizer(
+            input_text,
+            return_tensors="pt",
+            max_length=512,
+            truncation=True,
+        ).to(self.device)
+
+        with torch.no_grad():
+            outputs = self.model.generate(
+                input_ids=enc["input_ids"],
+                attention_mask=enc["attention_mask"],
+                num_beams=4,
+                max_length=45,
+                early_stopping=True,
+            )
+
+        return self.tokenizer.decode(
+            outputs[0], skip_special_tokens=True, clean_up_tokenization_spaces=True
+        )
+
+    def get_perplexity(self, topic: str, context: str, reference: str) -> float:
+        import torch
+
+        input_text = _T5_ZERO_SHOT_PROMPT.format(topic=topic, context=context)
+        inputs = self.tokenizer(
+            input_text, return_tensors="pt", max_length=512, truncation=True
+        ).to(self.device)
+        labels = self.tokenizer(
+            reference, return_tensors="pt", max_length=45, truncation=True
+        ).input_ids.to(self.device)
+
+        with torch.no_grad():
+            out = self.model(**inputs, labels=labels)
+
+        return __import__("torch").exp(out.loss).item()
+
+
+# ---------------------------------------------------------------------------
 # Ollama zero-shot baseline
 # ---------------------------------------------------------------------------
 
@@ -385,6 +456,8 @@ def load_model(config: "PipelineConfig", model_key: str):
     """
     if model_key.startswith("t5:"):
         mode = model_key[3:]
+        if mode == "zero":
+            return T5ZeroShotModel(config.training.model_name)
         model_dir = config.model_dir(mode) / "best_model"
         if not model_dir.exists():
             raise FileNotFoundError(f"T5 model not found: {model_dir}")

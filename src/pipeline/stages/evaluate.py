@@ -116,7 +116,7 @@ def run(
             except Exception as exc:
                 print(f"  [ERROR] {model_key}: {exc}")
 
-    # Save (strip non-serialisable fields)
+    # Save metrics JSON (strip non-serialisable fields)
     out_path = exp_dir / "evaluation.json"
     saveable = {
         k: {mk: mv for mk, mv in v.items() if mk not in ("predictions", "references")}
@@ -125,6 +125,19 @@ def run(
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(saveable, f, indent=2, ensure_ascii=False)
     print(f"[DONE] Results saved to {out_path}")
+
+    # Save predictions CSV per model key
+    for key, m in all_results.items():
+        preds = m.get("predictions", [])
+        refs  = m.get("references",  [])
+        if not preds:
+            continue
+        safe_key = key.replace("/", "_").replace(":", "_")
+        pred_path = exp_dir / f"predictions_{safe_key}.csv"
+        pd.DataFrame({"reference": refs, "prediction": preds}).to_csv(
+            pred_path, index=False, encoding="utf-8"
+        )
+        print(f"       Predictions -> {pred_path}")
 
     _print_table(all_results, dataset=dataset)
     return all_results
@@ -261,6 +274,9 @@ def _resolve_models(config: PipelineConfig, models: str, dataset: str) -> list[s
         return [m.strip() for m in models.split(",")]
 
     keys: list[str] = []
+
+    # 0. Always include the zero-shot T5 baseline (no checkpoint needed)
+    keys.append("t5:zero")
 
     # 1. Auto-discover fine-tuned T5 checkpoints
     for mode in ("baseline", "topic", "topic2x"):

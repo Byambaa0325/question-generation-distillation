@@ -66,8 +66,8 @@ def generate_questions(model, tokenizer, contexts, topics, max_length=45, num_be
         # Paper's input format: '<topic> {} <context> {} '
         input_text = '<topic> {} <context> {} '.format(topic, processed_context)
 
-        # Tokenize
-        encoding = tokenizer.encode_plus(
+        # Tokenize (use __call__; encode_plus is deprecated/removed in newer transformers)
+        encoding = tokenizer(
             input_text,
             return_tensors='pt',
             max_length=512,
