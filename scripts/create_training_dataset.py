@@ -156,7 +156,7 @@ def double_dataset(data):
         rev['text'] = entry['context2'] + " " + entry['context1']  # reversed
         doubled.append(rev)
 
-    print(f"  Doubled: {len(data)} → {len(doubled)} entries")
+    print(f"  Doubled: {len(data)} -> {len(doubled)} entries")
     return doubled
 
 
