@@ -47,13 +47,17 @@ class DatasetConfig:
 
 @dataclass
 class TrainingConfig:
-    model_name:     str       = "google-t5/t5-small"
-    batch:          int       = 64
-    lr:             float     = 1e-3
-    epochs:         int       = 50
-    max_input_len:  int       = 200
-    max_output_len: int       = 45
-    warmup_steps:   int       = 0
+    model_name:          str       = "google-t5/t5-small"
+    batch:               int       = 64
+    lr:                  float     = 1e-3
+    epochs:              int       = 50
+    max_input_len:       int       = 200
+    max_output_len:      int       = 45
+    warmup_steps:        int       = 0
+    fp16:                bool      = False   # T4 / V100
+    bf16:                bool      = False   # A100 / H100
+    grad_accum:          int       = 1       # effective_batch = batch * grad_accum
+    dataloader_workers:  int       = 0       # 0 = main process (Windows safe)
     special_tokens: list[str] = field(default_factory=lambda: ["<sep>", "<space>"])
 
 

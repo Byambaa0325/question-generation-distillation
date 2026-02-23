@@ -29,13 +29,17 @@ dataset:
   seed:              42
 
 training:
-  model_name:    google-t5/t5-small
-  batch:         64
-  lr:            1.0e-3
-  epochs:        50
-  max_input_len: 200
-  max_output_len: 45
-  warmup_steps:  0
+  model_name:         google-t5/t5-small
+  batch:              64
+  lr:                 1.0e-3
+  epochs:             50
+  max_input_len:      200
+  max_output_len:     45
+  warmup_steps:       0
+  fp16:               false   # set true for T4/V100 in Colab
+  bf16:               false   # set true for A100/H100 in Colab
+  grad_accum:         1       # increase to simulate larger batch without more VRAM
+  dataloader_workers: 0       # 0 = safe on Windows; set 2-4 on Linux/Colab
   special_tokens:
     - "<sep>"
     - "<space>"

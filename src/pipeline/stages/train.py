@@ -146,6 +146,13 @@ def run(
 
     model_out.mkdir(parents=True, exist_ok=True)
 
+    print(
+        f"  Precision: {'bf16' if tc.bf16 else 'fp16' if tc.fp16 else 'fp32'}"
+        f"  |  grad_accum={tc.grad_accum}"
+        f"  |  effective_batch={tc.batch * tc.grad_accum}"
+        f"  |  workers={tc.dataloader_workers}"
+    )
+
     training_args = Seq2SeqTrainingArguments(
         output_dir=str(model_out),
         num_train_epochs=tc.epochs,
@@ -153,15 +160,18 @@ def run(
         per_device_eval_batch_size=tc.batch,
         learning_rate=tc.lr,
         warmup_steps=tc.warmup_steps,
+        fp16=tc.fp16,
+        bf16=tc.bf16,
+        gradient_accumulation_steps=tc.grad_accum,
         save_strategy="epoch",
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
         greater_is_better=False,
         save_total_limit=3,
         predict_with_generate=False,
         logging_steps=50,
-        dataloader_num_workers=0,  # Windows compatibility
+        dataloader_num_workers=tc.dataloader_workers,
         report_to="none",
     )
 
@@ -174,7 +184,7 @@ def run(
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         data_collator=data_collator,
     )
 
